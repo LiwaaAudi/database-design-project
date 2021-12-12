@@ -13,5 +13,13 @@ dependencies:
 	pip install -r requirements.txt
 .PHONY: database
 database:
-	: # Creates and fill the database
+	: # Creates the database
 	docker-compose up
+.PHONY: down
+down:
+	: # Stops the docker container
+	docker-compose down
+.PHONY: fill
+fill:
+	: # Run python scripts to fill the database
+	cd py_scripts && python fill.py

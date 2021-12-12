@@ -1,157 +1,151 @@
--- location table
-CREATE TABLE IF NOT EXISTS locations (
-    location_id     bigserial       NOT NULL,
-    address         text            NOT NULL,
-    city            text,
-    postal_code     int,
-
-    CONSTRAINT locations_pk primary key (location_id)
+create table if not exists customers (
+    customer_id serial not null,
+    email varchar(255) not null unique,
+    first_name varchar(255) not null,
+    last_name varchar(255) not null,
+    phone varchar not null,
+    country varchar not null,
+    city varchar not null,
+    address varchar not null,
+    active bool default true,
+    constraint pk_customers primary key (customer_id)
 );
 
--- warehouses table
-CREATE TABLE IF NOT EXISTS warehouses (
-    warehouse_id    bigserial       NOT NULL,
-    warehouse_name  text,
-    location_id     int,
 
-    CONSTRAINT warehouses_pk primary key (warehouse_id),
-
-    CONSTRAINT warehouses_locations_fk
-      FOREIGN KEY(location_id)
-      REFERENCES locations(location_id)
-      ON DELETE CASCADE
+create table if not exists categories (
+    category_id bigserial not null,
+    category varchar(100) not null,
+    description varchar(255) not null,
+    parent_category varchar(100),
+    constraint categories_pk primary key (category_id)
 );
 
--- products_categories table
-CREATE TABLE IF NOT EXISTS product_categories (
-    category_id     bigserial       NOT NULL,
-    category_name   varchar(100)    NOT NULL,
 
-    CONSTRAINT product_categories_pk primary key (category_id)
+create table if not exists products (
+    product_id serial not null,
+    sku varchar(255) not null,
+    product_name varchar(255) not null,
+    description text,
+    category_id int not null,
+    price numeric default 0,
+    rate decimal not null,
+    rating_count int not null,
+    constraint products_pk primary key (product_id),
+    constraint products_fk foreign key (category_id)
+        references categories(category_id)
 );
 
--- products table
-CREATE TABLE IF NOT EXISTS products (
-
-    product_id      bigserial       NOT NULL,
-    product_name    text            NOT NULL,
-    price           float            NOT NULL,
-    description     text            NOT NULL,
-    category_id     int             NOT NULL,
-    image           text,
-
-    CONSTRAINT products_pk primary key (product_id),
-    CONSTRAINT products_categories_fk
-      FOREIGN KEY(category_id)
-      REFERENCES product_categories(category_id)
-      ON DELETE CASCADE
+create table if not exists stock (
+    product_id int not null,
+    sku varchar(255) not null,
+    quantity_available int not null,
+    constraint stock_pk primary key (product_id, sku),
+    constraint stock_products_fk foreign key (product_id)
+        references products(product_id)
 );
 
--- inventories table
-CREATE TABLE IF NOT EXISTS inventories (
-    product_id      int             NOT NULL,
-    warehouse_id    int             NOT NULL,
-    quantity        int             NOT NULL,
-
-    CONSTRAINT inventories_pk primary key (product_id, warehouse_id),
-    CONSTRAINT inventories_fk
-      FOREIGN KEY(product_id)
-      REFERENCES products(product_id)
-      ON DELETE CASCADE,
-    CONSTRAINT inventories_warehouses_fk
-      FOREIGN KEY(warehouse_id)
-      REFERENCES warehouses(warehouse_id)
-      ON DELETE CASCADE
+create table if not exists payment_type (
+    payment_type_id serial not null,
+    payment_type varchar(255) not null,
+    constraint payment_type_pk primary key (payment_type_id)
 );
 
--- customers table
-CREATE TABLE IF NOT EXISTS customers (
-
-    customer_id     bigserial       NOT NULL,
-    username        varchar(100)    NOT NULL,
-    city            text            NOT NULL,
-    address         text,
-
-    CONSTRAINT customers_pk primary key (customer_id)
+create table orders (
+    order_id serial not null,
+    customer_id integer not null,
+    purchased_at timestamp with time zone not null,
+    payment_type_id int not null,
+    constraint orders_pk primary key (order_id),
+    constraint orders_fk foreign key (customer_id)
+        references customers(customer_id),
+    constraint orders_payment_type_fk foreign key (payment_type_id)
+        references payment_type(payment_type_id)
 );
 
--- contacts table
-CREATE TABLE IF NOT EXISTS contacts (
-    contact_id      bigserial       NOT NULL,
-    first_name       varchar(100)    NOT NULL,
-    last_name       varchar(100)    NOT NULL,
-    email           text            NOT NULL,
-    phone           text,
-    customer_id     int             NOT NULL,
-
-    CONSTRAINT contacts_pk primary key (contact_id),
-    CONSTRAINT contacts_fk
-      FOREIGN KEY(customer_id)
-      REFERENCES customers(customer_id)
-      ON DELETE CASCADE
+create table if not exists shipping_address (
+    shipping_id bigserial not null,
+    customer_id bigint not null,
+    order_id bigint not null,
+    country varchar not null,
+    city varchar not null,
+    address text not null,
+    shipment_price decimal not null default 0,
+    constraint shipping_address_pk primary key (shipping_id, customer_id),
+    constraint shipping_address_fk foreign key (customer_id)
+        references customers(customer_id) on delete cascade,
+    constraint shipping_address_orders_fk foreign key (order_id)
+        references orders(order_id) on delete cascade
 );
 
--- shopping_session table
-CREATE TABLE IF NOT EXISTS shopping_session (
-    session_id      bigserial       NOT NULL,
-    customer_id     int             NOT NULL,
-    total           decimal         NOT NULL,
-    created_at      timestamp       NOT NULL,
-
-    CONSTRAINT shopping_session_pk primary key (session_id),
-    CONSTRAINT shopping_session_fk
-      FOREIGN KEY(customer_id)
-      REFERENCES customers(customer_id)
-      ON DELETE CASCADE
+create table if not exists billing_address (
+    billing_id bigserial not null,
+    customer_id bigint not null,
+    billing_country varchar not null,
+    billing_city varchar not null,
+    billing_address varchar not null,
+    payment_type_id int not null,
+    constraint billing_address_pk primary key (billing_id, customer_id),
+    constraint billing_address_fk foreign key (customer_id)
+        references customers (customer_id) on delete cascade,
+    constraint billing_address_payment_type_fk foreign key (payment_type_id)
+        references payment_type (payment_type_id) on delete cascade
 );
 
--- cart_items table
-CREATE TABLE IF NOT EXISTS cart_items (
-    cart_id         bigserial       NOT NULL,
-    session_id      int             NOT NULL,
-    product_id      int             NOT NULL,
-    quantiy         int             NOT NULL,
-
-    CONSTRAINT cart_items_pk primary key (cart_id, session_id),
-    CONSTRAINT cart_items_fk
-      FOREIGN KEY(session_id)
-      REFERENCES shopping_session(session_id)
-      ON DELETE CASCADE
+create table lineitems (
+    lineitem_id serial not null,
+    order_id int not null,
+    sku varchar(255) not null,
+    product_id int not null,
+    price numeric not null,
+    quantity integer not null,
+    constraint lineitems_pk primary key (lineitem_id),
+    constraint lineitems foreign key (order_id)
+        references orders(order_id),
+    constraint lineitems_products foreign key (product_id)
+        references products(product_id) on delete cascade
 );
 
--- payments table
-CREATE TABLE IF NOT EXISTS payments (
-    payment_id      bigserial       NOT NULL,
-    customer_id     int             NOT NULL,
-    last_name       varchar(100)    NOT NULL,
-    payment_type    text            NOT NULL,
-    provider        text,
 
-    CONSTRAINT payments_pk primary key (payment_id),
-    CONSTRAINT payments_fk
-      FOREIGN KEY(customer_id)
-      REFERENCES customers(customer_id)
-      ON DELETE CASCADE
-);
+alter table
+    lineitems
+add
+    product_name varchar not null default '';
 
--- orders table
-CREATE TABLE IF NOT EXISTS orders (
-    order_id            bigserial       NOT NULL,
-    customer_id         int             NOT NULL,
-    total_price         decimal(20,6)   NOT NULL,
-    shipping_id         bigserial       NOT NULL,
-    shipping_address    text            NOT NULL,
-    payment_id          int             NOT NULL,
-    purchased_at        timestamp       NOT NULL,
+UPDATE
+    lineitems
+SET
+    product_name = products.product_name
+FROM
+    products
+WHERE
+    lineitems.product_id = products.product_id;
 
-    CONSTRAINT orders_pk primary key (order_id),
-    CONSTRAINT orders_fk
-      FOREIGN KEY(customer_id)
-      REFERENCES customers(customer_id)
-      ON DELETE CASCADE,
-    CONSTRAINT orders_payments_fk
-      FOREIGN KEY(payment_id)
-      REFERENCES payments(payment_id)
-      ON DELETE CASCADE
-);
+alter table
+    lineitems
+add
+    description text not null default '';
+
+UPDATE
+    lineitems
+SET
+    description = products.description
+FROM
+    products
+WHERE
+    lineitems.product_id = products.product_id;
+
+
+alter table
+    products
+add
+    in_stock boolean not null default true;
+
+UPDATE
+    products
+SET
+    in_stock = true
+FROM
+    stock
+WHERE
+    stock.quantity_available > 0;
 
