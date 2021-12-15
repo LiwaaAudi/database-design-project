@@ -23,3 +23,7 @@ down:
 fill:
 	: # Run python scripts to fill the database
 	cd py_scripts && python fill.py
+.PHONY: clean
+clean:
+	: # delete all database files and start the database next time from scratch.
+	rm -r ./postgres-data/*
