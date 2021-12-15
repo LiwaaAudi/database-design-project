@@ -68,7 +68,6 @@ class PostgreSQL:
 
     def connect(self):
         try:
-            print('Connecting to postgres: {}'.format(self.config['database']))
             conn = psycopg2.connect(**self.config)
         except OperationalError as err:
             self.show_psycopg2_exception(err)
