@@ -1,6 +1,8 @@
 # Database Design Semestral Work
 ### [https://dbdesign-project.liwaaaudi.me/](https://dbdesign-project.liwaaaudi.me/)
 
+![alt text](ER.png)
+
 ## Installation
 1. Make sure you have [docker](https://www.docker.com/)  installed
 2. Make sure you have [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) installed.

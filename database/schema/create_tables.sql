@@ -92,7 +92,7 @@ create table if not exists billing_address (
         references payment_type (payment_type_id) on delete cascade
 );
 
-create table lineitems (
+create table if not exists lineitems (
     lineitem_id serial not null,
     order_id int not null,
     product_id int not null,
@@ -102,6 +102,37 @@ create table lineitems (
         references orders(order_id),
     constraint lineitems_products foreign key (product_id)
         references products(product_id) on delete cascade
+);
+
+create table if not exists products_refund (
+    refund_id serial not null,
+    created_at date not null,
+    lineitem_id int not null,
+    refund_amount decimal not null,
+    constraint products_refund_pk primary key (refund_id),
+    constraint product_refund_fk foreign key (lineitem_id)
+        references lineitems(lineitem_id)
+);
+
+create table if not exists website_sessions(
+    website_session_id serial not null,
+    created_at date not null,
+    customer_id int not null,
+    utm_source varchar not null,
+    utm_campaign varchar not null,
+    channel varchar not null,
+    device_type varchar not null,
+    constraint website_sessions_pk primary key (website_session_id)
+);
+
+create table if not exists website_pageviews (
+    website_pageview_id serial not null,
+    created_at date,
+    website_session_id int not null,
+    pageview_url text not null,
+    constraint website_pageviews_pk primary key (website_pageview_id),
+    constraint website_pageviews_fk foreign key (website_session_id)
+        references website_sessions (website_session_id)
 );
 
 alter table

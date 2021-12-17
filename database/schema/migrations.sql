@@ -20,3 +20,7 @@ FROM
 WHERE
     orders.order_id = shipping_address.order_id
 RETURNING *;
+
+alter table website_sessions
+  add  constraint website_sessions_fk foreign key (customer_id)
+        references customers (customer_id);

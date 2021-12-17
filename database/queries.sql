@@ -217,3 +217,80 @@ update orders
 SET order_number = CASE WHEN LEFT(order_id, 3) <> 'gid' THEN order_id ELSE '' END;
 
 
+-- 20. What utm sources brought more orders
+select
+	website_sessions.utm_source,
+	website_sessions.utm_campaign,
+	count (distinct website_sessions.website_session_id) as sessions,
+	count (distinct orders.order_id) as orders,
+	count (distinct orders.order_id)/count (distinct website_sessions.website_session_id) * 100 as converion_rate_to_order
+from website_sessions
+	left join orders
+		on website_sessions.customer_id = orders.customer_id
+group by utm_source, utm_campaign
+order by count ( distinct website_sessions.website_session_id)desc;
+
+-- 21. Devices and orders from google paid utm befor 1 november 2021
+select
+       website_sessions.device_type,
+       count (distinct website_sessions.website_session_id) as sessions,
+	   count (distinct orders.order_id) as orders,
+	   count (distinct orders.order_id)/count (distinct website_sessions.website_session_id) * 100 as converion_rate_to_order
+from website_sessions
+	left join orders
+		on website_sessions.customer_id = orders.customer_id
+where
+      website_sessions.utm_source = 'google'
+and
+      website_sessions.channel = 'paid'
+and
+      website_sessions.created_at < '2021-11-01'
+group by website_sessions.device_type;
+
+-- 22. Sessions per yearly weeks
+select
+    extract(year from created_at) as year,
+    extract(week from created_at) as week,
+    min ( date(created_at)) as week_starts,
+    count (distinct website_session_id) sessions
+from website_sessions
+group by
+         extract(year from created_at), extract(week from created_at);
+
+-- 23. What is the top content by url in  page views
+
+select
+    pageview_url,
+    count(website_pageview_id) as most_visited,
+    count(website_session_id) as sessions
+from website_pageviews
+group by pageview_url
+order by most_visited desc;
+
+-- 24. analyzing sessions in first 4 months of 2021
+select
+    extract(month from created_at) as month,
+    count (distinct website_session_id) as sessions
+from website_sessions
+where created_at >= '2021-01-01' and created_at<= '2021-12-31'
+group by extract(month from created_at)
+
+-- 25. analyzing average session volume by an hour of the day and by work week days
+select
+	hour,
+	avg ( case when weekday = 0 then web_sessions else null end ) 'monday',
+	avg ( case when weekday = 1 then web_sessions else null end ) 'tuesday',
+	avg ( case when weekday = 2 then web_sessions else null end ) 'wednesday',
+	avg ( case when weekday = 3 then web_sessions else null end ) 'thursday',
+	avg ( case when weekday = 4 then web_sessions else null end ) 'friday',
+	avg ( web_sessions ) average_of_all
+from (
+	select
+		extract( hour from created_at ),
+		count (distinct website_session_id) as web_sessions,
+		extract (isodow from created_at) as weekday
+	from website_sessions
+	group by 3,1
+) as hour
+group by 1
+order by 1;

@@ -16,4 +16,4 @@ services:
         volumes:
           - ./postgres-data:/var/lib/postgresql/data
           - ./database/schema/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
-          - ./database/schema/migrations.sql:/docker-entrypoint-initdb.d/migrations.sql
+          - ./database/schema/random_fill.sql:/docker-entrypoint-initdb.d/random_fill.sql
